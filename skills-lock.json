@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "Jira Automation": {
+      "source": "claude-office-skills/skills",
+      "sourceType": "github",
+      "skillPath": "jira-automation/SKILL.md",
+      "computedHash": "9ff9011bebab1510b13eca4569ec081011b401cbedd25f05e0837ffbade88462"
+    },
+    "terminal-ui": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "github",
+      "skillPath": "skills/.curated/terminal-ui/SKILL.md",
+      "computedHash": "693f8dec7160be453466e41d50623279e5f3b129fd310aec7d18a518fcce6a6a"
+    }
+  }
+}

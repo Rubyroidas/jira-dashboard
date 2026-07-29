@@ -1,0 +1,4 @@
+{
+  "*.{ts,tsx}": ["eslint --fix", "tsc --noEmit -p tsconfig.json"],
+  "*.{json,md}": []
+}

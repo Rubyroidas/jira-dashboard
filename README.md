@@ -1,3 +1,7 @@
+[![](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md)
+
+---
+
 # jira-dashboard (`jdb`)
 
 A full-screen terminal dashboard for Jira Cloud, built with [Ink](https://github.com/vadimdemedes/ink).

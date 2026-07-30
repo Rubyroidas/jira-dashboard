@@ -32,6 +32,14 @@
     "worklog"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rubyroidas/jira-dashboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Rubyroidas/jira-dashboard/issues"
+  },
+  "homepage": "https://github.com/Rubyroidas/jira-dashboard#readme",
   "dependencies": {
     "ink": "^5.1.0",
     "react": "^18.3.1"

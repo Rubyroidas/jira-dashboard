@@ -56,12 +56,44 @@ Or write `~/.config/jira-dashboard/config.json` (environment variables win):
   "email": "you@example.com",
   "apiToken": "…",
   "issuesJql": "assignee = currentUser() AND statusCategory != Done AND status NOT IN (\"Cancelled\", \"Closed\", \"Backlog\") ORDER BY updated DESC",
-  "worklogDays": 14
+  "worklogDays": 14,
+  "holidayCountry": "UA",
+  "holidayRegion": null
 }
 ```
 
 `issuesJql` is worth customising: status names vary per site, and some boards model the backlog
 by sprint rather than by status — in that case append `AND sprint IS NOT EMPTY`.
+
+### Non-working days
+
+`holidayCountry` is an ISO-3166 alpha-2 code (`UA`, `PL`, `US`, …). Its statutory holidays are
+fetched from [date.nager.at](https://date.nager.at) and cached in
+`~/.config/jira-dashboard/holidays.json`; changing the country invalidates that cache, and each
+year is refreshed after 30 days. Both keys can be overridden with `JIRA_HOLIDAY_COUNTRY` and
+`JIRA_HOLIDAY_REGION`. If the fetch fails the dashboard falls back to the cache and starts
+regardless.
+
+Many holidays are provincial or state-level rather than nationwide — Canada's Civic Holiday on
+the first Monday of August, for instance. Those are **shown rather than skipped**, but dimmed and
+marked `~` instead of `*`, listing the regions that observe them; they do not excuse an empty
+timesheet. Set `holidayRegion` (`"CA-ON"`, `"US-CA"`, …) and the ones covering your region become
+full days off:
+
+```
+ Mon 03 Aug~🎉   0.0h (Civic Holiday / British Columbia Day … · CA-ON, …)   # region unset
+ Mon 03 Aug*🎉   0.0h (Civic Holiday)                                       # holidayRegion CA-ON
+```
+
+Personal leave goes in `~/.config/jira-dashboard/days-off.json`, which you maintain by hand:
+
+```json
+["2026-08-10", { "date": "2026-08-11", "label": "moving day" }]
+```
+
+Both kinds of day show up in magenta in the two left panels — holidays marked `*🎉`, days off `·`,
+holidays observed only in other regions dimmed and marked `~🎉` — and an empty day off is never
+coloured red, so what is left in red is what still needs hours.
 
 ## Keys
 

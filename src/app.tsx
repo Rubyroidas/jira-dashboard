@@ -8,6 +8,7 @@ import { PANEL_HEADER_ROWS } from './components/PanelFrame';
 import { spinnerChar } from './components/PanelStatus';
 import { chartWidthFor, WorkChartPanel } from './components/WorkChartPanel';
 import { WorklogPanel } from './components/WorklogPanel';
+import { loadDayMarks, type DayMarks } from './data/calendar';
 import type { JiraClient } from './data/client';
 import { fetchOpenIssues } from './data/issues';
 import { fetchWorklogDays } from './data/worklogs';
@@ -57,6 +58,7 @@ export function App({ config, client, me }: AppProps): ReactElement {
   const [spinnerFrame, setSpinnerFrame] = useState(0);
   const [reloadToken, setReloadToken] = useState(0);
   const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
+  const [dayMarks, setDayMarks] = useState<DayMarks>(() => new Map());
 
   // ---- layout -------------------------------------------------------------
   const topHeight = Math.max(MIN_TOP_HEIGHT, Math.floor((rows - 1) / 2));
@@ -99,6 +101,25 @@ export function App({ config, client, me }: AppProps): ReactElement {
       cancelled = true;
     };
   }, [client, config, me, reloadToken]);
+
+  // The worklog window is known up front, so the calendar need not wait on Jira.
+  // `loadDayMarks` swallows its own failures, hence no error state here.
+  useEffect(() => {
+    let cancelled = false;
+
+    const today = new Date();
+    const oldest = new Date(today);
+    oldest.setDate(oldest.getDate() - config.worklogDays);
+    const years = [...new Set([oldest.getFullYear(), today.getFullYear()])];
+
+    void loadDayMarks(config, years).then((marks) => {
+      if (!cancelled) setDayMarks(marks);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [config, reloadToken]);
 
   const loading = worklogs.loading || issues.loading;
 
@@ -328,6 +349,7 @@ export function App({ config, client, me }: AppProps): ReactElement {
           width={leftWidth}
           offset={worklogOffset}
           spinnerFrame={spinnerFrame}
+          dayMarks={dayMarks}
         />
         <IssueList
           state={issues}
@@ -349,6 +371,7 @@ export function App({ config, client, me }: AppProps): ReactElement {
           height={bottomHeight}
           width={chartWidth}
           spinnerFrame={spinnerFrame}
+          dayMarks={dayMarks}
         />
         <IssuePreview
           issue={selected}

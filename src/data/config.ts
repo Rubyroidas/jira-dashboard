@@ -4,11 +4,13 @@ import { join } from 'node:path';
 
 import { JiraError, type Config } from '../types';
 
-export const CONFIG_PATH = join(
+/** Everything the dashboard persists — config, caches, hand-edited lists — lives here. */
+export const CONFIG_DIR = join(
   process.env['XDG_CONFIG_HOME'] ?? join(homedir(), '.config'),
   'jira-dashboard',
-  'config.json',
 );
+
+export const CONFIG_PATH = join(CONFIG_DIR, 'config.json');
 
 const TOKEN_URL = 'https://id.atlassian.com/manage-profile/security/api-tokens';
 
@@ -27,6 +29,14 @@ interface FileConfig {
   apiToken?: string;
   issuesJql?: string;
   worklogDays?: number;
+  holidayCountry?: string;
+  holidayRegion?: string;
+}
+
+/** Trim and upper-case a code, collapsing blank/absent values to `null`. */
+function normalizeCode(value: string | undefined): string | null {
+  const trimmed = value?.trim().toUpperCase();
+  return trimmed ? trimmed : null;
 }
 
 function readConfigFile(): FileConfig {
@@ -101,5 +111,7 @@ export function loadConfig(): Config {
       typeof file.worklogDays === 'number' && file.worklogDays > 0
         ? Math.floor(file.worklogDays)
         : DEFAULT_WORKLOG_DAYS,
+    holidayCountry: normalizeCode(process.env['JIRA_HOLIDAY_COUNTRY'] ?? file.holidayCountry),
+    holidayRegion: normalizeCode(process.env['JIRA_HOLIDAY_REGION'] ?? file.holidayRegion),
   };
 }

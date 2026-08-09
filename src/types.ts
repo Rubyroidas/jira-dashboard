@@ -6,6 +6,10 @@ export interface Config {
   issuesJql: string;
   /** How many days of worklog history the left panel covers. */
   worklogDays: number;
+  /** ISO-3166 alpha-2 country whose statutory holidays count as non-working days. */
+  holidayCountry: string | null;
+  /** Optional Nager subdivision code (e.g. "US-CA") to narrow regional holidays. */
+  holidayRegion: string | null;
 }
 
 export interface Issue {

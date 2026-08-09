@@ -3,6 +3,7 @@ import { render } from 'ink';
 import { createRequire } from 'node:module';
 
 import { App } from './app';
+import { DAYS_OFF_PATH } from './data/calendar';
 import { JiraClient } from './data/client';
 import { CONFIG_PATH, DEFAULT_ISSUES_JQL, loadConfig } from './data/config';
 import { JiraError } from './types';
@@ -33,6 +34,9 @@ const HELP = `
     JIRA_BASE_URL    https://your-team.atlassian.net
     JIRA_EMAIL       your Atlassian account email
     JIRA_API_TOKEN   https://id.atlassian.com/manage-profile/security/api-tokens
+    JIRA_HOLIDAY_COUNTRY  ISO country code for statutory holidays, e.g. UA
+    JIRA_HOLIDAY_REGION   your subdivision, e.g. CA-ON — regional holidays are
+                          shown either way, but only count as days off with it
 
     Or ${CONFIG_PATH}:
       {
@@ -40,8 +44,15 @@ const HELP = `
         "email": "you@example.com",
         "apiToken": "...",
         "issuesJql": ${JSON.stringify(DEFAULT_ISSUES_JQL)},
-        "worklogDays": 14
+        "worklogDays": 14,
+        "holidayCountry": "UA"
       }
+
+    Personal leave goes in ${DAYS_OFF_PATH}:
+      ["2026-08-10", { "date": "2026-08-11", "label": "moving day" }]
+
+    Holidays are fetched from date.nager.at and cached next to the config;
+    changing the country invalidates the cache.
 
   Keys
     ↑ ↓ / j k    move within the focused panel

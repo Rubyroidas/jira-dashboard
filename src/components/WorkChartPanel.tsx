@@ -3,6 +3,8 @@ import type { ReactElement } from 'react';
 
 import { PANEL_CHROME_ROWS, PanelFrame } from './PanelFrame';
 import { PanelError, Spinner } from './PanelStatus';
+import type { DayMarks } from '../data/calendar';
+import { dayOfMonth, isToday, isWeekend, MONTHS } from '../dates';
 import type { Loadable, WorklogDay, WorklogSummary } from '../types';
 
 interface WorkChartPanelProps {
@@ -16,6 +18,8 @@ interface WorkChartPanelProps {
   height: number;
   width: number;
   spinnerFrame: number;
+  /** Holidays and personal days off, so a bare column can be read as expected. */
+  dayMarks: DayMarks;
 }
 
 /** One full row of bar equals this many hours; half a row equals half of it. */
@@ -35,7 +39,8 @@ const TRACE_BLOCK = '▁';
 /** Borders (2) + horizontal padding (2), plus one spare column of slack. */
 const PANEL_SIDE_COLUMNS = 5;
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** Marks a non-working day that has no bar, which would otherwise be blank. */
+const REST_DOT = '·';
 
 /**
  * Width the chart needs for `dayCount` bars at the given bar width, including a
@@ -62,6 +67,7 @@ export function WorkChartPanel({
   height,
   width,
   spinnerFrame,
+  dayMarks,
 }: WorkChartPanelProps): ReactElement {
   if (state.loading && days.length === 0) {
     return (
@@ -110,14 +116,23 @@ export function WorkChartPanel({
         {total > 0 &&
           rows.map((rowFromBottom) => (
             <Text key={rowFromBottom}>
-              {days.map((day, index) => (
-                <Text key={day.date}>
-                  {index > 0 ? ' ' : ''}
-                  <Text color={barColor(day)}>
-                    {glyphFor(day.hours, rowFromBottom).repeat(barWidth)}
+              {days.map((day, index) => {
+                // Only days that are actually off for you get the rest treatment;
+                // a holiday observed elsewhere is still a working day here.
+                const rest = dayMarks.get(day.date)?.observed === true;
+                // A rest day with no bar still gets a baseline dot, so it never
+                // reads as an unexplained gap.
+                const glyph =
+                  rest && day.hours === 0 && rowFromBottom === 0
+                    ? REST_DOT
+                    : glyphFor(day.hours, rowFromBottom);
+                return (
+                  <Text key={day.date}>
+                    {index > 0 ? ' ' : ''}
+                    <Text color={barColor(day, rest)}>{glyph.repeat(barWidth)}</Text>
                   </Text>
-                </Text>
-              ))}
+                );
+              })}
             </Text>
           ))}
 
@@ -126,7 +141,16 @@ export function WorkChartPanel({
             {days.map((day, index) => (
               <Text key={day.date}>
                 {index > 0 ? ' ' : ''}
-                <Text color={isToday(day.date) ? 'cyan' : 'gray'} bold={isToday(day.date)}>
+                <Text
+                  color={
+                    isToday(day.date)
+                      ? 'cyan'
+                      : dayMarks.get(day.date)?.observed
+                        ? 'magenta'
+                        : 'gray'
+                  }
+                  bold={isToday(day.date)}
+                >
                   {dayOfMonth(day.date)}
                 </Text>
               </Text>
@@ -160,30 +184,11 @@ function glyphFor(hours: number, rowFromBottom: number): string {
   return ' ';
 }
 
-/** Weekend work is tinted differently so an empty Saturday reads as expected. */
-function barColor(day: WorklogDay): string {
+/** Rest days are tinted differently so an empty column reads as expected. */
+function barColor(day: WorklogDay, rest: boolean): string {
+  if (rest) return 'magenta';
   if (day.hours === 0) return 'gray';
   return isWeekend(day.date) ? 'blue' : 'green';
-}
-
-function parseDate(key: string): Date {
-  const [year = '1970', month = '01', day = '01'] = key.split('-');
-  return new Date(Number(year), Number(month) - 1, Number(day));
-}
-
-function isWeekend(key: string): boolean {
-  const weekday = parseDate(key).getDay();
-  return weekday === 0 || weekday === 6;
-}
-
-function isToday(key: string): boolean {
-  return parseDate(key).toDateString() === new Date().toDateString();
-}
-
-/** Two-digit day of month, so labels line up under their two-column bars. */
-function dayOfMonth(key: string): string {
-  const [, , day = '01'] = key.split('-');
-  return day.padStart(2, '0');
 }
 
 /** `16 Jul → 29 Jul`, for when per-bar labels do not fit. */

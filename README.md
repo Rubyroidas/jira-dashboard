@@ -107,6 +107,7 @@ coloured red, so what is left in red is what still needs hours.
 | `Tab` / `Shift+Tab` | Cycle panels (worklogs → tickets → preview) |
 | Click | Select a ticket / focus a panel |
 | Wheel | Scroll the panel under the cursor |
+| `t` | Toggle the full ticket tree (show epics/stories that are not assigned to you) |
 | `r` | Reload both panels |
 | `q` / `Esc` / `Ctrl+C` | Quit |
 

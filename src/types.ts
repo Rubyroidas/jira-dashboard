@@ -32,6 +32,22 @@ export interface Issue {
   totalTimeSpentSeconds: number | null;
   /** Sprint names the issue belongs to, active ones first; empty if none. */
   sprints: string[];
+  /** True when the issue came from the user's own JQL, false for a pulled-in ancestor. */
+  mine: boolean;
+}
+
+/** One rendered line of the issue tree. */
+export interface IssueRow {
+  issue: Issue;
+  /**
+   * Ancestor guides, outermost first: `true` where that ancestor still has
+   * siblings below it (draw `│`), `false` where it was the last child.
+   */
+  guides: boolean[];
+  /** Whether this node is the last child of its parent, for `└` vs `├`. */
+  last: boolean;
+  /** Whether the row has rows nested under it, for the folder marker. */
+  hasChildren: boolean;
 }
 
 export interface WorklogDay {

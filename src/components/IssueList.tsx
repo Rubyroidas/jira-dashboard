@@ -3,10 +3,13 @@ import type { ReactElement } from 'react';
 
 import { PANEL_CHROME_ROWS, PanelFrame } from './PanelFrame';
 import { PanelError, Spinner, spinnerChar } from './PanelStatus';
-import type { Issue, Loadable } from '../types';
+import { folderMark, treePrefix } from '../tree';
+import type { Issue, IssueRow, Loadable } from '../types';
 
 interface IssueListProps {
   state: Loadable<Issue[]>;
+  rows: IssueRow[];
+  fullTree: boolean;
   focused: boolean;
   height: number;
   width: number;
@@ -27,11 +30,19 @@ function statusColor(category: string): string {
   }
 }
 
+/** Truncate or pad `text` so a cell always covers exactly `width` columns. */
+function fit(text: string, width: number): string {
+  if (width <= 0) return '';
+  return text.length > width ? `${text.slice(0, Math.max(0, width - 1))}…` : text.padEnd(width);
+}
+
 const KEY_WIDTH = 10;
 const STATUS_WIDTH = 14;
 
 export function IssueList({
   state,
+  rows,
+  fullTree,
   focused,
   height,
   width,
@@ -41,12 +52,21 @@ export function IssueList({
 }: IssueListProps): ReactElement {
   const issues = state.data ?? [];
   const visibleRows = Math.max(1, height - PANEL_CHROME_ROWS);
-  const summaryWidth = Math.max(8, width - 4 - 2 - KEY_WIDTH - STATUS_WIDTH);
 
+  // One gutter width for the whole list keeps the key/status columns aligned,
+  // and it is capped so deep trees cannot squeeze the summary off screen.
+  // +2 for the folder marker column that follows the branch glyphs.
+  const gutterWidth = Math.min(
+    Math.max(0, Math.floor(width / 4)),
+    rows.reduce((widest, row) => Math.max(widest, treePrefix(row).length + 2), 0),
+  );
+  const summaryWidth = Math.max(8, width - 4 - 2 - gutterWidth - KEY_WIDTH - STATUS_WIDTH);
+
+  const label = fullTree ? 'my tickets · full tree' : 'my open tickets';
   const base =
-    issues.length > visibleRows
-      ? `my open tickets (${selectedIndex + 1}/${issues.length})`
-      : `my open tickets (${issues.length})`;
+    rows.length > visibleRows
+      ? `${label} (${selectedIndex + 1}/${rows.length})`
+      : `${label} (${rows.length})`;
   // Reloading keeps the old rows on screen, so the spinner moves into the title.
   const title = state.loading && issues.length > 0 ? `${spinnerChar(spinnerFrame)} ${base}` : base;
 
@@ -60,33 +80,43 @@ export function IssueList({
         <Text color="gray">No open tickets matched the query.</Text>
       ) : (
         <Box flexDirection="column">
-          {issues.slice(offset, offset + visibleRows).map((issue, index) => {
+          {rows.slice(offset, offset + visibleRows).map((row, index) => {
+            const issue = row.issue;
             const selected = offset + index === selectedIndex;
+            // The highlight has to paint the padding too, so every cell is
+            // padded to its column width instead of relying on Box layout.
+            const background = selected ? (focused ? 'cyan' : 'blue') : undefined;
+            const cellColor = (own: string): string => (selected ? 'black' : own);
             return (
               <Box key={issue.key}>
-                <Box width={2} flexShrink={0}>
-                  <Text color="cyan">{selected ? '▸ ' : '  '}</Text>
-                </Box>
-                <Box width={KEY_WIDTH} flexShrink={0}>
-                  <Text bold={selected} color={selected ? 'cyan' : 'white'} wrap="truncate-end">
-                    {issue.key}
+                <Text color={cellColor('cyan')} backgroundColor={background}>
+                  {selected ? '▸ ' : '  '}
+                </Text>
+                {gutterWidth > 0 ? (
+                  <Text color={cellColor('gray')} backgroundColor={background}>
+                    {fit(`${treePrefix(row)}${folderMark(row)} `, gutterWidth)}
                   </Text>
-                </Box>
-                <Box width={STATUS_WIDTH} flexShrink={0}>
-                  <Text color={statusColor(issue.statusCategory)} wrap="truncate-end">
-                    {issue.status}
-                  </Text>
-                </Box>
-                <Box width={summaryWidth} flexShrink={1}>
-                  <Text
-                    color={selected ? 'white' : 'gray'}
-                    bold={selected}
-                    inverse={selected && focused}
-                    wrap="truncate-end"
-                  >
-                    {issue.summary}
-                  </Text>
-                </Box>
+                ) : null}
+                <Text
+                  bold={selected}
+                  color={cellColor(issue.mine ? 'white' : 'gray')}
+                  backgroundColor={background}
+                >
+                  {fit(issue.key, KEY_WIDTH)}
+                </Text>
+                <Text
+                  color={cellColor(statusColor(issue.statusCategory))}
+                  backgroundColor={background}
+                >
+                  {fit(issue.status, STATUS_WIDTH)}
+                </Text>
+                <Text
+                  color={cellColor('gray')}
+                  bold={selected}
+                  backgroundColor={background}
+                >
+                  {fit(issue.summary, summaryWidth)}
+                </Text>
               </Box>
             );
           })}

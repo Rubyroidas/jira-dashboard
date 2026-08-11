@@ -16,6 +16,7 @@ import { useHomeEndKeys } from './hooks/useHomeEndKeys';
 import { isMouseSequence, useMouse, type MouseEvent } from './hooks/useMouse';
 import { useTerminalSize } from './hooks/useTerminalSize';
 import { openUrl } from './openUrl';
+import { buildIssueTree } from './tree';
 import { JiraError } from './types';
 import type { Config, CurrentUser, Issue, Loadable, WorklogDay, WorklogSummary } from './types';
 
@@ -59,6 +60,8 @@ export function App({ config, client, me }: AppProps): ReactElement {
   const [reloadToken, setReloadToken] = useState(0);
   const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
   const [dayMarks, setDayMarks] = useState<DayMarks>(() => new Map());
+  // "t" toggles between my own tickets and the full tree around them.
+  const [fullTree, setFullTree] = useState(false);
 
   // ---- layout -------------------------------------------------------------
   const topHeight = Math.max(MIN_TOP_HEIGHT, Math.floor((rows - 1) / 2));
@@ -133,13 +136,24 @@ export function App({ config, client, me }: AppProps): ReactElement {
     };
   }, [loading]);
 
-  const issueList = issues.data ?? [];
+  const keepSelectedKey = useRef<string | null>(null);
+  const issueRowsData = useMemo(
+    () => buildIssueTree(issues.data ?? [], fullTree),
+    [issues.data, fullTree],
+  );
+  const issueList = useMemo(() => issueRowsData.map((row) => row.issue), [issueRowsData]);
   const selected = issueList[selectedIndex] ?? null;
 
-  // Keep the selection valid when a reload returns a shorter list.
+  // Keep the selection valid when a reload or a mode switch shortens the list,
+  // and follow the remembered ticket when the tree mode changed under it.
   useEffect(() => {
-    setSelectedIndex((index) => Math.min(index, Math.max(0, issueList.length - 1)));
-  }, [issueList.length]);
+    const wanted = keepSelectedKey.current;
+    keepSelectedKey.current = null;
+    const target = wanted === null ? -1 : issueList.findIndex((issue) => issue.key === wanted);
+    setSelectedIndex((index) =>
+      target >= 0 ? target : Math.min(index, Math.max(0, issueList.length - 1)),
+    );
+  }, [issueList]);
 
   // Days run oldest-first, so today sits at the bottom — start scrolled there.
   useEffect(() => {
@@ -165,6 +179,16 @@ export function App({ config, client, me }: AppProps): ReactElement {
     },
     [issueList.length, issueRows],
   );
+
+  // Selection can also move without `selectIndex` (reload, tree toggle), so the
+  // viewport is re-anchored here rather than at every call site.
+  useEffect(() => {
+    setIssueOffset((offset) => {
+      if (selectedIndex < offset) return selectedIndex;
+      if (selectedIndex >= offset + issueRows) return selectedIndex - issueRows + 1;
+      return Math.min(offset, Math.max(0, issueList.length - issueRows));
+    });
+  }, [selectedIndex, issueRows, issueList.length]);
 
   const scrollPanel = useCallback(
     (panel: Panel, delta: number) => {
@@ -303,6 +327,12 @@ export function App({ config, client, me }: AppProps): ReactElement {
       exit();
       return;
     }
+    if (input === 't') {
+      // Keep the reading position on the same ticket across the mode switch.
+      keepSelectedKey.current = selected?.key ?? null;
+      setFullTree((current) => !current);
+      return;
+    }
     if (input === 'r') {
       setReloadToken((token) => token + 1);
       return;
@@ -334,7 +364,7 @@ export function App({ config, client, me }: AppProps): ReactElement {
   const hint = useMemo(
     () =>
       focus === 'issues'
-        ? '↑↓/jk move · home/end first/last · enter open · tab panel · r reload · q quit'
+        ? '↑↓/jk move · enter open · t tree · tab panel · r reload · q quit'
         : '↑↓/jk scroll · home/end top/bottom · tab panel · r reload · q quit',
     [focus],
   );
@@ -353,6 +383,8 @@ export function App({ config, client, me }: AppProps): ReactElement {
         />
         <IssueList
           state={issues}
+          rows={issueRowsData}
+          fullTree={fullTree}
           focused={focus === 'issues'}
           height={topHeight}
           width={columns - leftWidth}

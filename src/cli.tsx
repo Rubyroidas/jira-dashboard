@@ -35,8 +35,8 @@ const HELP = `
     JIRA_EMAIL       your Atlassian account email
     JIRA_API_TOKEN   https://id.atlassian.com/manage-profile/security/api-tokens
     JIRA_HOLIDAY_COUNTRY  ISO country code for statutory holidays, e.g. UA
-    JIRA_HOLIDAY_REGION   your subdivision, e.g. CA-ON — regional holidays are
-                          shown either way, but only count as days off with it
+    JIRA_HOLIDAY_REGION   your subdivision, e.g. CA-ON — regional holidays then
+                          count as days off, and other regions' are hidden
 
     Or ${CONFIG_PATH}:
       {

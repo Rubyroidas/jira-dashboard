@@ -20,9 +20,11 @@ export interface DayMark {
   kind: DayMarkKind;
   label: string;
   /**
-   * Whether the day is actually off for *you*. A holiday only some regions
-   * observe — Canada's Civic Holiday, say — is still worth showing, but it does
-   * not excuse an empty timesheet unless it covers your configured region.
+   * Whether the day is actually off for *you*. Only reachable as `false` when
+   * no region is configured: a holiday some regions observe — Canada's Civic
+   * Holiday, say — is then still worth showing, since we cannot tell whether it
+   * is yours, but it does not excuse an empty timesheet. Once `holidayRegion`
+   * is set, holidays that miss it are dropped instead.
    */
   observed: boolean;
 }
@@ -35,7 +37,7 @@ export function isNonWorkingDay(key: string, marks: DayMarks): boolean {
   return isWeekend(key) || marks.get(key)?.observed === true;
 }
 
-interface CachedHoliday {
+export interface CachedHoliday {
   date: string;
   name: string;
   /** Subdivisions observing it; absent or empty means the whole country does. */
@@ -69,6 +71,19 @@ const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
  * beats one that does not start.
  */
 export async function loadDayMarks(config: Config, years: number[]): Promise<DayMarks> {
+  return buildDayMarks(await loadHolidays(config, years), config.holidayRegion, readDaysOff());
+}
+
+/**
+ * The marking rule on its own, free of network and disk so it can be tested
+ * directly: which holidays survive, which count as days off, and how personal
+ * leave overrides them.
+ */
+export function buildDayMarks(
+  holidays: CachedHoliday[],
+  region: string | null,
+  daysOff: Array<[string, string]>,
+): DayMarks {
   const marks: DayMarks = new Map();
 
   // One date can carry several regional holidays — Canada's first Monday in
@@ -76,17 +91,20 @@ export async function loadDayMarks(config: Config, years: number[]): Promise<Day
   // merged rather than overwriting each other.
   const regional = new Map<string, { names: string[]; counties: string[] }>();
 
-  for (const holiday of await loadHolidays(config, years)) {
+  for (const holiday of holidays) {
     const counties = holiday.counties ?? [];
-    const observed =
-      counties.length === 0 ||
-      (config.holidayRegion !== null && counties.includes(config.holidayRegion));
+    const observed = counties.length === 0 || (region !== null && counties.includes(region));
 
     if (observed) {
       // An observed holiday always wins the date over merely-regional ones.
       marks.set(holiday.date, { kind: 'holiday', label: holiday.name, observed: true });
       continue;
     }
+
+    // Once you have named your region, another region's holiday is simply not
+    // yours — showing it only makes a working day look like a day off. Without
+    // a region there is no way to tell, so they are listed instead.
+    if (region !== null) continue;
 
     const group = regional.get(holiday.date) ?? { names: [], counties: [] };
     if (!group.names.includes(holiday.name)) group.names.push(holiday.name);
@@ -106,7 +124,7 @@ export async function loadDayMarks(config: Config, years: number[]): Promise<Day
 
   // Personal leave wins over a holiday on the same date — it is the more
   // specific statement about the day.
-  for (const [date, label] of readDaysOff()) {
+  for (const [date, label] of daysOff) {
     marks.set(date, { kind: 'dayoff', label, observed: true });
   }
 

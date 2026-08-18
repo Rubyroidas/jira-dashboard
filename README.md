@@ -75,14 +75,18 @@ year is refreshed after 30 days. Both keys can be overridden with `JIRA_HOLIDAY_
 regardless.
 
 Many holidays are provincial or state-level rather than nationwide — Canada's Civic Holiday on
-the first Monday of August, for instance. Those are **shown rather than skipped**, but dimmed and
-marked `~` instead of `*`, listing the regions that observe them; they do not excuse an empty
-timesheet. Set `holidayRegion` (`"CA-ON"`, `"US-CA"`, …) and the ones covering your region become
-full days off:
+the first Monday of August, for instance. Set `holidayRegion` (`"CA-ON"`, `"US-CA"`, …) and the
+ones covering your region become full days off, while the rest are hidden: a Yukon holiday is
+not your day off in Ontario.
+
+Leave `holidayRegion` unset and there is no way to tell which are yours, so they are **shown
+rather than skipped** — dimmed and marked `~` instead of `*`, listing the regions that observe
+them; those do not excuse an empty timesheet:
 
 ```
  Mon 03 Aug~🎉   0.0h (Civic Holiday / British Columbia Day … · CA-ON, …)   # region unset
  Mon 03 Aug*🎉   0.0h (Civic Holiday)                                       # holidayRegion CA-ON
+ Mon 17 Aug      7.5h JD-14, JD-22                                          # CA-YT only: hidden
 ```
 
 Personal leave goes in `~/.config/jira-dashboard/days-off.json`, which you maintain by hand:
@@ -92,7 +96,7 @@ Personal leave goes in `~/.config/jira-dashboard/days-off.json`, which you maint
 ```
 
 Both kinds of day show up in magenta in the two left panels — holidays marked `*🎉`, days off `·`,
-holidays observed only in other regions dimmed and marked `~🎉` — and an empty day off is never
+holidays observed only in other regions dimmed and marked `~🎉` when no region is set — and an empty day off is never
 coloured red, so what is left in red is what still needs hours.
 
 ## Keys

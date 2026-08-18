@@ -1,6 +1,6 @@
 {
   "name": "jira-dashboard",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Full-screen terminal dashboard for Jira: 14-day worklog summary and your open tickets",
   "type": "module",
   "bin": {

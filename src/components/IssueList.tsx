@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 
 import { PANEL_CHROME_ROWS, PanelFrame } from './PanelFrame';
 import { PanelError, Spinner, spinnerChar } from './PanelStatus';
+import { PRIORITY_WIDTH, priorityMark } from '../priority';
 import { folderMark, treePrefix } from '../tree';
 import type { Issue, IssueRow, Loadable } from '../types';
 
@@ -60,7 +61,10 @@ export function IssueList({
     Math.max(0, Math.floor(width / 4)),
     rows.reduce((widest, row) => Math.max(widest, treePrefix(row).length + 2), 0),
   );
-  const summaryWidth = Math.max(8, width - 4 - 2 - gutterWidth - KEY_WIDTH - STATUS_WIDTH);
+  const summaryWidth = Math.max(
+    8,
+    width - 4 - 2 - gutterWidth - PRIORITY_WIDTH - KEY_WIDTH - STATUS_WIDTH,
+  );
 
   const label = fullTree ? 'my tickets · full tree' : 'my open tickets';
   const base =
@@ -87,6 +91,7 @@ export function IssueList({
             // padded to its column width instead of relying on Box layout.
             const background = selected ? (focused ? 'cyan' : 'blue') : undefined;
             const cellColor = (own: string): string => (selected ? 'black' : own);
+            const priority = priorityMark(issue.priority);
             return (
               <Box key={issue.key}>
                 <Text color={cellColor('cyan')} backgroundColor={background}>
@@ -97,6 +102,13 @@ export function IssueList({
                     {fit(`${treePrefix(row)}${folderMark(row)} `, gutterWidth)}
                   </Text>
                 ) : null}
+                <Text
+                  bold={priority?.bold}
+                  color={priority ? cellColor(priority.color) : undefined}
+                  backgroundColor={background}
+                >
+                  {fit(priority ? priority.glyph : '', PRIORITY_WIDTH)}
+                </Text>
                 <Text
                   bold={selected}
                   color={cellColor(issue.mine ? 'white' : 'gray')}

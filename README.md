@@ -22,7 +22,9 @@ A full-screen terminal dashboard for Jira Cloud, built with [Ink](https://github
 - **Top left** — hours you logged on each of the last 14 days (oldest first, so today is at the
   bottom), plus the issues you logged against.
 - **Top right** — your open tickets (not done, not cancelled/closed, not in the backlog), selectable
-  by keyboard or mouse.
+  by keyboard or mouse. Each row starts with a Jira-style priority arrow: `⇈` highest, `↑` high,
+  `=` medium, `↓` low, `⇊` lowest, `‼` critical/blocker. Priorities the site names differently are
+  left blank.
 - **Bottom left** — bar chart of the hours *you* logged on the **selected** ticket, day by day over
   the same 14 days. The scale is fixed so bars are comparable between tickets and between runs: 2h is
   half a row, 4h one row, 8h two rows; anything logged below 2h gets a thin mark so it stays visible.

@@ -15,6 +15,7 @@ import { fetchWorklogDays } from './data/worklogs';
 import { useHomeEndKeys } from './hooks/useHomeEndKeys';
 import { isMouseSequence, useMouse, type MouseEvent } from './hooks/useMouse';
 import { useTerminalSize } from './hooks/useTerminalSize';
+import { clampSplit, nudgeSplit, SPLIT_STEP } from './layout';
 import { openUrl } from './openUrl';
 import { buildIssueTree } from './tree';
 import { JiraError } from './types';
@@ -62,21 +63,26 @@ export function App({ config, client, me }: AppProps): ReactElement {
   const [dayMarks, setDayMarks] = useState<DayMarks>(() => new Map());
   // "t" toggles between my own tickets and the full tree around them.
   const [fullTree, setFullTree] = useState(false);
+  // Alt+←/→ offsets of the top and bottom splitters from their default positions.
+  const [topShift, setTopShift] = useState(0);
+  const [bottomShift, setBottomShift] = useState(0);
 
   // ---- layout -------------------------------------------------------------
   const topHeight = Math.max(MIN_TOP_HEIGHT, Math.floor((rows - 1) / 2));
   const bottomHeight = Math.max(MIN_TOP_HEIGHT, rows - 1 - topHeight);
-  const leftWidth = Math.max(MIN_LEFT_WIDTH, Math.min(52, Math.floor(columns * 0.42)));
+  const defaultLeftWidth = Math.max(MIN_LEFT_WIDTH, Math.min(52, Math.floor(columns * 0.42)));
+  const leftWidth = clampSplit(defaultLeftWidth + topShift, columns);
   const issueRows = Math.max(1, topHeight - 3);
   const worklogRows = issueRows;
 
   // The chart takes the width its bars need, but never more than half the screen;
   // the preview gets the rest.
   const dayCount = worklogs.data?.days.length ?? config.worklogDays;
-  const chartWidth = Math.min(
+  const defaultChartWidth = Math.min(
     Math.floor(columns / 2),
     Math.max(chartWidthFor(dayCount, 1), Math.min(chartWidthFor(dayCount, 2), columns - 40)),
   );
+  const chartWidth = clampSplit(defaultChartWidth + bottomShift, columns);
 
   // ---- data ---------------------------------------------------------------
   useEffect(() => {
@@ -350,6 +356,17 @@ export function App({ config, client, me }: AppProps): ReactElement {
       return;
     }
 
+    // Alt+←/→ moves the splitter of the row holding the focused panel.
+    if (key.meta && (key.leftArrow || key.rightArrow)) {
+      const delta = key.leftArrow ? -SPLIT_STEP : SPLIT_STEP;
+      if (focus === 'preview') {
+        setBottomShift((shift) => nudgeSplit(shift, delta, defaultChartWidth, columns));
+      } else {
+        setTopShift((shift) => nudgeSplit(shift, delta, defaultLeftWidth, columns));
+      }
+      return;
+    }
+
     // A held key arrives as one chunk ("jjj"), so count the repeats.
     if (key.downArrow) scrollPanel(focus, 1);
     else if (key.upArrow) scrollPanel(focus, -1);
@@ -364,8 +381,8 @@ export function App({ config, client, me }: AppProps): ReactElement {
   const hint = useMemo(
     () =>
       focus === 'issues'
-        ? '↑↓/jk move · enter open · t tree · tab panel · r reload · q quit'
-        : '↑↓/jk scroll · home/end top/bottom · tab panel · r reload · q quit',
+        ? '↑↓/jk move · enter open · t tree · alt←→ resize · tab panel · r reload · q quit'
+        : '↑↓/jk scroll · home/end top/bottom · alt←→ resize · tab panel · r reload · q quit',
     [focus],
   );
 

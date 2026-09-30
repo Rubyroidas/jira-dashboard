@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 
 import { PANEL_CHROME_ROWS, PanelFrame } from './PanelFrame';
 import { PanelError, Spinner, spinnerChar } from './PanelStatus';
+import { ISSUE_TYPE_WIDTH, issueTypeMark } from '../issueType';
 import { PRIORITY_WIDTH, priorityMark } from '../priority';
 import { folderMark, treePrefix } from '../tree';
 import type { Issue, IssueRow, Loadable } from '../types';
@@ -63,7 +64,7 @@ export function IssueList({
   );
   const summaryWidth = Math.max(
     8,
-    width - 4 - 2 - gutterWidth - PRIORITY_WIDTH - KEY_WIDTH - STATUS_WIDTH,
+    width - 4 - 2 - gutterWidth - ISSUE_TYPE_WIDTH - PRIORITY_WIDTH - KEY_WIDTH - STATUS_WIDTH,
   );
 
   const label = fullTree ? 'my tickets · full tree' : 'my open tickets';
@@ -91,6 +92,7 @@ export function IssueList({
             // padded to its column width instead of relying on Box layout.
             const background = selected ? (focused ? 'cyan' : 'blue') : undefined;
             const cellColor = (own: string): string => (selected ? 'black' : own);
+            const issueType = issueTypeMark(issue.issueType);
             const priority = priorityMark(issue.priority);
             return (
               <Box key={issue.key}>
@@ -102,6 +104,12 @@ export function IssueList({
                     {fit(`${treePrefix(row)}${folderMark(row)} `, gutterWidth)}
                   </Text>
                 ) : null}
+                <Text
+                  color={issueType ? cellColor(issueType.color) : undefined}
+                  backgroundColor={background}
+                >
+                  {fit(issueType ? issueType.glyph : '', ISSUE_TYPE_WIDTH)}
+                </Text>
                 <Text
                   bold={priority?.bold}
                   color={priority ? cellColor(priority.color) : undefined}

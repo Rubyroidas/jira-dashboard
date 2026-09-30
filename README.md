@@ -22,9 +22,11 @@ A full-screen terminal dashboard for Jira Cloud, built with [Ink](https://github
 - **Top left** — hours you logged on each of the last 14 days (oldest first, so today is at the
   bottom), plus the issues you logged against.
 - **Top right** — your open tickets (not done, not cancelled/closed, not in the backlog), selectable
-  by keyboard or mouse. Each row starts with a Jira-style priority arrow: `⇈` highest, `↑` high,
-  `=` medium, `↓` low, `⇊` lowest, `‼` critical/blocker. Priorities the site names differently are
-  left blank.
+  by keyboard or mouse. Each row starts with an issue-type icon — bug (red), task (blue), story
+  (green), sub-task (cyan); other types are left blank — which needs a
+  [Nerd Font](https://www.nerdfonts.com) in your terminal. Next comes a Jira-style priority arrow:
+  `⇈` highest, `↑` high, `=` medium, `↓` low, `⇊` lowest, `‼` critical/blocker. Priorities the site
+  names differently are left blank.
 - **Bottom left** — bar chart of the hours *you* logged on the **selected** ticket, day by day over
   the same 14 days. The scale is fixed so bars are comparable between tickets and between runs: 2h is
   half a row, 4h one row, 8h two rows; anything logged below 2h gets a thin mark so it stays visible.
@@ -111,6 +113,7 @@ coloured red, so what is left in red is what still needs hours.
 | `Home` / `End` | Jump to the first / last item in the focused panel |
 | `g` / `G` | Jump to first / last ticket |
 | `Tab` / `Shift+Tab` | Cycle panels (worklogs → tickets → preview) |
+| `Alt+←` / `Alt+→` | Move the splitter of the focused panel's row (each pane keeps at least 20 columns) |
 | Click | Select a ticket / focus a panel |
 | Wheel | Scroll the panel under the cursor |
 | `t` | Toggle the full ticket tree (show epics/stories that are not assigned to you) |
@@ -166,7 +169,7 @@ To test what users actually get instead — a frozen copy built from the real ta
 
 ```sh
 npm pack
-npm install -g ./jira-dashboard-0.1.0.tgz
+npm install -g ./jira-dashboard-*.tgz
 jdb --version
 ```
 
@@ -222,41 +225,18 @@ is one row taller than its height — see `PanelFrame` and the row-count arithme
 
 ## Publishing to npm
 
-The package publishes as **`jira-dashboard`** and installs the **`jdb`** command. Only `dist/` and
-`README.md` ship (`files` in `package.json`); source and configs stay out of the tarball.
+The package is published as [**`jira-dashboard`**](https://www.npmjs.com/package/jira-dashboard) and
+installs the **`jdb`** command. Only `dist/` and `README.md` ship (`files` in `package.json`); source
+and configs stay out of the tarball.
 
 ```sh
-# 1. Authenticate (once per machine)
-npm login
-npm whoami
-
-# 2. Make sure it is releasable (lint + typecheck + build)
-npm run check
-
-# 3. Inspect exactly what will be uploaded — no files are published by this
-npm pack --dry-run
-
-# 4. Bump the version (also creates a git tag when this is a git repo;
-#    add --no-git-tag-version if it is not, or if you tag separately)
+npm run publish-check          # lint + typecheck + build
+npm pack --dry-run     # inspect exactly what will be uploaded
 npm version patch      # or: minor | major
-
-# 5. Publish. prepublishOnly rebuilds dist/ first.
-npm publish
-
-# 6. Verify the published artifact
+npm publish            # prepublishOnly rebuilds dist/ first
 npm view jira-dashboard version
-npx --yes jira-dashboard@latest --version
 ```
 
-Notes:
-
-- **The name `jira-dashboard` was unclaimed on the public registry as of this writing**, but that can
-  change at any time. If `npm publish` fails with `E403`, the name is taken — publish under a scope
-  instead (`@yourname/jira-dashboard`), which additionally requires `npm publish --access public`
-  since scoped packages default to private.
-- **Publishing is effectively permanent.** Unpublishing is only allowed within 72 hours and a version
-  number can never be reused. Prefer `npm deprecate jira-dashboard@1.2.3 "reason"` for a bad release
-  and ship a fix as a new version.
+- **Publishing is effectively permanent.** A version number can never be reused. Prefer
+  `npm deprecate jira-dashboard@1.2.3 "reason"` for a bad release and ship a fix as a new version.
 - **`engines` requires Node ≥ 20** (the code uses `AbortSignal.timeout` and built-in `fetch`).
-- To rehearse the whole flow without touching the public registry, publish to a local registry such
-  as [Verdaccio](https://verdaccio.org/): `npm publish --registry http://localhost:4873`.

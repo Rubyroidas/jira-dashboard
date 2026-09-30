@@ -11,12 +11,12 @@
     "README.md"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "dev": "tsx src/cli.tsx",
     "test": "jest",
-    "build": "esbuild src/cli.tsx --bundle --outfile=dist/cli.js --platform=node --format=esm --target=node20 --packages=external && chmod +x dist/cli.js",
+    "build": "esbuild src/cli.tsx --bundle --outfile=dist/cli.js --platform=node --format=esm --target=node22 --packages=external && chmod +x dist/cli.js",
     "publish-check": "npm run lint && npm run typecheck && npm test && npm run build",
     "prepublishOnly": "npm run publish-check",
     "typecheck": "tsc --noEmit",
@@ -42,24 +42,24 @@
   },
   "homepage": "https://github.com/Rubyroidas/jira-dashboard#readme",
   "dependencies": {
-    "ink": "^5.1.0",
-    "react": "^18.3.1"
+    "ink": "^7.1.1",
+    "react": "^19.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@jest/globals": "^30.4.1",
+    "@jest/globals": "^30.5.2",
     "@types/jest": "^30.0.0",
-    "@types/node": "^22.10.2",
-    "@types/react": "^18.3.18",
-    "esbuild": "^0.28.1",
+    "@types/node": "^22.20.4",
+    "@types/react": "^19.2.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9.17.0",
     "eslint-plugin-react": "^7.37.3",
     "eslint-plugin-react-hooks": "^5.1.0",
-    "jest": "^30.4.2",
+    "jest": "^30.5.2",
     "lint-staged": "^15.3.0",
-    "ts-jest": "^29.4.12",
-    "tsx": "^4.19.2",
+    "ts-jest": "^29.4.14",
+    "tsx": "^4.23.15",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.19.0"
+    "typescript-eslint": "^8.71.0"
   }
 }

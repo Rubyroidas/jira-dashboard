@@ -16,7 +16,7 @@
   "scripts": {
     "dev": "tsx src/cli.tsx",
     "test": "jest",
-    "build": "esbuild src/cli.tsx --bundle --outfile=dist/cli.js --platform=node --format=esm --target=node20 --packages=external --sourcemap && chmod +x dist/cli.js",
+    "build": "esbuild src/cli.tsx --bundle --outfile=dist/cli.js --platform=node --format=esm --target=node20 --packages=external && chmod +x dist/cli.js",
     "publish-check": "npm run lint && npm run typecheck && npm test && npm run build",
     "prepublishOnly": "npm run publish-check",
     "typecheck": "tsc --noEmit",

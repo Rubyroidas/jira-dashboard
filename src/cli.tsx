@@ -6,6 +6,7 @@ import { App } from './app';
 import { DAYS_OFF_PATH } from './data/calendar';
 import { JiraClient } from './data/client';
 import { CONFIG_PATH, DEFAULT_ISSUES_JQL, loadConfig } from './data/config';
+import { installCompletion } from './completion';
 import { runEditor } from './edit';
 import { buildProgram } from './program';
 import { JiraError } from './types';
@@ -112,7 +113,14 @@ async function runUi(): Promise<number> {
   return 0;
 }
 
-buildProgram({ version, helpAfter: HELP_AFTER, runUi, runEdit: runEditor })
+buildProgram({
+  version,
+  helpAfter: HELP_AFTER,
+  runUi,
+  runEdit: runEditor,
+  installCompletion,
+  print: (text) => process.stdout.write(text),
+})
   .parseAsync(process.argv)
   .catch((error: unknown) => {
     reportError(error);

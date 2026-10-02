@@ -41,6 +41,26 @@ npm install -g jira-dashboard
 jdb
 ```
 
+### Tab completion
+
+`jdb completion install bash` (or `zsh`, `fish`) installs a completion script where the shell
+will find it; open a new shell afterwards.
+
+| Shell | Written to | Startup file |
+| --- | --- | --- |
+| bash | `~/.local/share/bash-completion/completions/jdb` (needs the bash-completion package) | untouched |
+| fish | `~/.config/fish/completions/jdb.fish` | untouched |
+| zsh | `~/.config/jira-dashboard/completion.zsh` | one `source` line appended to `~/.zshrc`, once |
+
+`jdb completion show <shell>` prints the script instead, headed by instructions, if you would
+rather load it yourself:
+
+```sh
+eval "$(jdb completion show bash)"       # ~/.bashrc
+eval "$(jdb completion show zsh)"        # ~/.zshrc, after compinit
+jdb completion show fish | source        # ~/.config/fish/config.fish
+```
+
 ## Configure
 
 Everything comes from the Jira Cloud REST API, authenticated with an

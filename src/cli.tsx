@@ -6,6 +6,8 @@ import { App } from './app';
 import { DAYS_OFF_PATH } from './data/calendar';
 import { JiraClient } from './data/client';
 import { CONFIG_PATH, DEFAULT_ISSUES_JQL, loadConfig } from './data/config';
+import { runEditor } from './edit';
+import { buildProgram } from './program';
 import { JiraError } from './types';
 
 const require = createRequire(import.meta.url);
@@ -20,16 +22,8 @@ const ALT_SCREEN_ON = `${ESC}[?1049h`;
 const ALT_SCREEN_OFF = `${ESC}[?1049l`;
 const CURSOR_SHOW = `${ESC}[?25h`;
 
-const HELP = `
-  jdb — Jira dashboard in your terminal
-
-  Usage
-    $ jdb
-
-  Options
-    -h, --help       Show this help
-    -v, --version    Show the version
-
+/** Printed after the usage, options and commands that commander generates. */
+const HELP_AFTER = `
   Configuration (environment variables take precedence)
     JIRA_BASE_URL    https://your-team.atlassian.net
     JIRA_EMAIL       your Atlassian account email
@@ -54,6 +48,9 @@ const HELP = `
     Holidays are fetched from date.nager.at and cached next to the config;
     changing the country invalidates the cache.
 
+    \`jdb edit config\`, \`jdb edit days-off\` and \`jdb edit holidays\` open these
+    files in $VISUAL, falling back to $EDITOR.
+
   Keys
     ↑ ↓ / j k    move within the focused panel
     home / end   jump to the first / last item
@@ -74,18 +71,7 @@ function reportError(error: unknown): void {
   process.stderr.write('\n');
 }
 
-async function main(): Promise<number> {
-  const args = process.argv.slice(2);
-
-  if (args.includes('-h') || args.includes('--help')) {
-    process.stdout.write(`${HELP}\n`);
-    return 0;
-  }
-  if (args.includes('-v') || args.includes('--version')) {
-    process.stdout.write(`${version}\n`);
-    return 0;
-  }
-
+async function runUi(): Promise<number> {
   if (!process.stdout.isTTY) {
     process.stderr.write('jdb: needs an interactive terminal (stdout is not a TTY).\n');
     return 1;
@@ -126,10 +112,8 @@ async function main(): Promise<number> {
   return 0;
 }
 
-main()
-  .then((code) => {
-    process.exitCode = code;
-  })
+buildProgram({ version, helpAfter: HELP_AFTER, runUi, runEdit: runEditor })
+  .parseAsync(process.argv)
   .catch((error: unknown) => {
     reportError(error);
     process.exitCode = 1;

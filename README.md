@@ -66,6 +66,9 @@ Or write `~/.config/jira-dashboard/config.json` (environment variables win):
 }
 ```
 
+`jdb edit config` opens that file in `$VISUAL` (or `$EDITOR`, then `vi`) and exits when the
+editor closes, without launching the dashboard.
+
 `issuesJql` is worth customising: status names vary per site, and some boards model the backlog
 by sprint rather than by status — in that case append `AND sprint IS NOT EMPTY`.
 
@@ -98,6 +101,9 @@ Personal leave goes in `~/.config/jira-dashboard/days-off.json`, which you maint
 ```json
 ["2026-08-10", { "date": "2026-08-11", "label": "moving day" }]
 ```
+
+`jdb edit days-off` opens it in your editor. `jdb edit holidays` does the same for the holiday
+cache, but that file is fetched, so hand edits last only until the next refresh.
 
 Both kinds of day show up in magenta in the two left panels — holidays marked `*🎉`, days off `·`,
 holidays observed only in other regions dimmed and marked `~🎉` when no region is set — and an empty day off is never

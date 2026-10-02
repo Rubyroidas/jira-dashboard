@@ -42,6 +42,7 @@
   },
   "homepage": "https://github.com/Rubyroidas/jira-dashboard#readme",
   "dependencies": {
+    "commander": "^14.0.3",
     "ink": "^7.1.1",
     "react": "^19.2.0"
   },
